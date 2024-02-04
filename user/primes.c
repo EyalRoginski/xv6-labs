@@ -12,7 +12,7 @@ void prime_sieve(int fd_in)
         return;
     }
 
-    printf("%d prime\n", prime);
+    printf("prime %d\n", prime);
 
     int prime_pipe[2];
     pipe(prime_pipe);

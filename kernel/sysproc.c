@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "../kernel/sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -99,5 +100,40 @@ sys_trace(void)
 
   argint(0, &mask);
   myproc()->trace_mask = mask;
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  struct sysinfo *info;
+  int free_memory = 0;
+  int num_procs = 0;
+
+  argaddr(0, (uint64*)&info);
+  
+  while (growproc(4096)) 
+  {
+    free_memory += 4096;
+  }
+  info->freemem = free_memory;
+  growproc(-free_memory);
+
+
+  int pid = fork();
+  while (pid != -1)
+  {
+    if (pid == 0)
+    {
+      wait(0);
+    } else 
+    {
+      num_procs += 1;
+      pid = fork();
+    }
+  }
+
+  info->nproc = num_procs;
+
   return 0;
 }

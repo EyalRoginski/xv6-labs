@@ -1,0 +1,9 @@
+1. The function that called syscall is usertrap.
+2. The value of `p->trapframe->a7` is 0x7. This represents the exec syscall, which the kernel
+calls on startup.
+3. Since the SPP bit in $sstatus is clear, the CPU was in user-mode before calling the syscall.
+4. sepc = 0x0000000080002102; `num` corrosponds to the `s2` register.
+5. The kernel crashes because of a "Load Page Fault", because the address 0 is unused and not
+a part of the kernel address space.
+6. The binary that was running when the kernel panicked was "initcode" and its pid was 1. 
+Unsurprising.

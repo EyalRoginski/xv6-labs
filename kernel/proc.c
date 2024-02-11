@@ -140,6 +140,24 @@ found:
     return 0;
   }
 
+  struct usyscall *usyscall = (struct usyscall *)kalloc();
+  if (usyscall == 0)
+  {
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  usyscall->pid = p->pid;
+
+  if (mappages(p->pagetable, USYSCALL, PGSIZE,
+              (uint64)(usyscall), PTE_R | PTE_U) < 0)
+  {
+    uvmunmap(p->pagetable, USYSCALL, 1, 0);
+    uvmfree(p->pagetable, 0);
+    return 0;
+  }
+
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));

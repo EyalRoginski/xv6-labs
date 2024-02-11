@@ -106,34 +106,16 @@ sys_trace(void)
 uint64
 sys_sysinfo(void)
 {
-  struct sysinfo *info;
-  int free_memory = 0;
-  int num_procs = 0;
+  uint64 addr;
+  argaddr(0, &addr);
+  struct sysinfo info;
+  struct proc *p = myproc();
 
-  argaddr(0, (uint64*)&info);
+  info.freemem = freemem();
+  info.nproc = nproc();
   
-  while (growproc(4096)) 
-  {
-    free_memory += 4096;
-  }
-  info->freemem = free_memory;
-  growproc(-free_memory);
-
-
-  int pid = fork();
-  while (pid != -1)
-  {
-    if (pid == 0)
-    {
-      wait(0);
-    } else 
-    {
-      num_procs += 1;
-      pid = fork();
-    }
-  }
-
-  info->nproc = num_procs;
+  if (copyout(p->pagetable, addr, (char *)&info, sizeof(info)) < 0)
+    return -1;
 
   return 0;
 }

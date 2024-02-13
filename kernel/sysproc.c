@@ -69,12 +69,42 @@ sys_sleep(void)
   return 0;
 }
 
-
 #ifdef LAB_PGTBL
 int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  int page_num;
+  uint64 first_page;
+  uint32 accessed_mask = 0;
+  uint64 result_buffer;
+
+  argaddr(0, &first_page);
+  argint(1, &page_num);
+  argaddr(2, &result_buffer);
+
+  if (page_num > 32 || page_num < 1) 
+  {
+    return -1;
+  }
+
+  pagetable_t pagetable = myproc()->pagetable;
+
+  for (int i = 0; i < page_num; i++)
+  {
+    uint64 va = first_page + i * PGSIZE;
+    pte_t *pte = (pte_t *)walk(pagetable, va, 0);
+    if (pte == 0)
+      break;
+    if (*pte & PTE_A)
+    {
+      accessed_mask |= 1 << i;
+      *pte &= ~PTE_A;
+    }
+  }
+
+  copyout(pagetable, result_buffer, (char *)&accessed_mask, sizeof(uint32));
+
   return 0;
 }
 #endif

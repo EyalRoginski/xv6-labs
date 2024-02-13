@@ -22,7 +22,7 @@ void print_pte(pte_t pte, int index, int depth)
     printf(" ..");
   }
 
-  printf("%d: pte %p pa %p flags %x\n", index, pte, PTE2PA(pte), PTE_FLAGS(pte));
+  printf("%d: pte %p pa %p\n", index, pte, PTE2PA(pte), PTE_FLAGS(pte));
 
 }
 
@@ -44,6 +44,7 @@ vmprint_r(pagetable_t pagetable, int depth)
   void
 vmprint(pagetable_t pagetable) 
 {
+  printf("page table %p\n", pagetable);
   vmprint_r(pagetable, 0);
 }
 

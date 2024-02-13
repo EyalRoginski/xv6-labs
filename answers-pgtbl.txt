@@ -1,0 +1,9 @@
+1. I think stat and fstat could probably be made faster with this method.
+2. By index of the leaf (which in this case is unique):
+0   - FLAGS: V, R, X, U - user text segment
+1   - FLAGS: V, R, W, U - user heap/data
+2   - FLAGS: V, R, W    - kernel data?
+3   - FLAGS: V, R, W, U - user heap/data
+509 - FLAGS: V, R, U    - usyscall
+510 - FLAGS: V, R, W    - trapframe
+511 - FLAGS: V, R, X    - trampoline

@@ -122,6 +122,7 @@ panic(char *s)
   printf("panic: ");
   printf(s);
   printf("\n");
+  backtrace();
   panicked = 1; // freeze uart output from other CPUs
   for(;;)
     ;
@@ -132,4 +133,21 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+void
+backtrace(void)
+{
+  printf("backtrace\n");
+
+  uint64* frame_pointer = (uint64 *)r_fp();
+  uint64 page_bottom = PGROUNDDOWN((uint64)frame_pointer);
+  // Check until next frame pointer is valid, so we don't print 
+  // garbage return addresses.
+  while ((uint64)*(frame_pointer - 2) >= page_bottom)
+  {
+    uint64* ra = (uint64 *)*(frame_pointer - 1);
+    printf("%p\n", ra);
+    frame_pointer = (uint64 *)*(frame_pointer - 2);
+  }
 }

@@ -1,0 +1,10 @@
+1. The registers a# contain arguments, for example, in the call to printf, a2 contained 13.
+2. The compiler inlined both function calls into line 26: li a1,12 which simply loads 12 into a1.
+3. printf is located 1554 bytes after the current instruction when it is called, at address 642.
+4. It should be 38.
+5. It yields "HE110 World". If RISC-V were big-endian, then 57616 would not need to be changed,
+    because the order of characters when printing hex numbers wouldn't change. But the value of i would
+    need to be changed, to 0x726c6400, which is reversed byte order.
+6. After "y=" is whatever was in the a2 register at the time, so garbage data. Or maybe it could
+    be valuable to someone...
+

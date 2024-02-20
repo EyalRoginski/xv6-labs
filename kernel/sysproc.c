@@ -142,8 +142,6 @@ void restore_alarm_frame(struct proc *p)
   p->trapframe->a5 = p->alarm_trapframe->a5;
   p->trapframe->a6 = p->alarm_trapframe->a6;
   p->trapframe->a7 = p->alarm_trapframe->a7;
-  // Don't copy a7 because we need to know if we came from sigreturn later.
-  // Pinky promise we'll copy it over later.
   p->trapframe->s0 = p->alarm_trapframe->s0;
   p->trapframe->s1 = p->alarm_trapframe->s1;
   p->trapframe->s2 = p->alarm_trapframe->s2;

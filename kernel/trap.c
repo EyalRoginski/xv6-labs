@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "syscall.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -27,6 +28,47 @@ void
 trapinithart(void)
 {
   w_stvec((uint64)kernelvec);
+}
+
+void
+copy_alarm_trapframe(struct proc *p)
+{
+  p->alarm_trapframe->kernel_satp = p->trapframe->kernel_satp;
+  p->alarm_trapframe->kernel_sp = p->trapframe->kernel_sp;
+  p->alarm_trapframe->kernel_trap = p->trapframe->kernel_trap;
+  p->alarm_trapframe->kernel_hartid = p->trapframe->kernel_hartid;
+  p->alarm_trapframe->epc = p->trapframe->epc;
+  p->alarm_trapframe->ra = p->trapframe->ra;
+  p->alarm_trapframe->sp = p->trapframe->sp;
+  p->alarm_trapframe->gp = p->trapframe->gp;
+  p->alarm_trapframe->tp = p->trapframe->tp;
+  p->alarm_trapframe->t0 = p->trapframe->t0;
+  p->alarm_trapframe->t1 = p->trapframe->t1;
+  p->alarm_trapframe->t2 = p->trapframe->t2;
+  p->alarm_trapframe->t3 = p->trapframe->t3;
+  p->alarm_trapframe->t4 = p->trapframe->t4;
+  p->alarm_trapframe->t5 = p->trapframe->t5;
+  p->alarm_trapframe->t6 = p->trapframe->t6;
+  p->alarm_trapframe->a0 = p->trapframe->a0;
+  p->alarm_trapframe->a1 = p->trapframe->a1;
+  p->alarm_trapframe->a2 = p->trapframe->a2;
+  p->alarm_trapframe->a3 = p->trapframe->a3;
+  p->alarm_trapframe->a4 = p->trapframe->a4;
+  p->alarm_trapframe->a5 = p->trapframe->a5;
+  p->alarm_trapframe->a6 = p->trapframe->a6;
+  p->alarm_trapframe->a7 = p->trapframe->a7;
+  p->alarm_trapframe->s0 = p->trapframe->s0;
+  p->alarm_trapframe->s1 = p->trapframe->s1;
+  p->alarm_trapframe->s2 = p->trapframe->s2;
+  p->alarm_trapframe->s3 = p->trapframe->s3;
+  p->alarm_trapframe->s4 = p->trapframe->s4;
+  p->alarm_trapframe->s5 = p->trapframe->s5;
+  p->alarm_trapframe->s6 = p->trapframe->s6;
+  p->alarm_trapframe->s7 = p->trapframe->s7;
+  p->alarm_trapframe->s8 = p->trapframe->s8;
+  p->alarm_trapframe->s9 = p->trapframe->s9;
+  p->alarm_trapframe->s10 = p->trapframe->s10;
+  p->alarm_trapframe->s11 = p->trapframe->s11;
 }
 
 //
@@ -65,6 +107,11 @@ usertrap(void)
     intr_on();
 
     syscall();
+    if (p->coming_from_sigreturn)
+    {
+      p->trapframe->a0 = p->alarm_trapframe->a0;
+      p->coming_from_sigreturn = 0;
+    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
@@ -78,7 +125,17 @@ usertrap(void)
 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
+    if (p->alarm_handler != -1)
+    {
+      p->ticks_since_last += 1;
+      if (!p->handler_running && p->ticks_since_last == p->alarm_interval) {
+        copy_alarm_trapframe(p);
+        p->ticks_since_last = 0;
+        p->trapframe->epc = p->alarm_handler;
+        p->handler_running = 1;
+    }
     yield();
+  }
 
   usertrapret();
 }

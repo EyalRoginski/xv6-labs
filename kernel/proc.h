@@ -104,4 +104,12 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // For sigalarm and sigreturn
+  uint64 alarm_handler;
+  uint64 alarm_interval;
+  uint64 ticks_since_last; // CPU ticks the process has consumed since the last call to handler.
+  int handler_running;
+  int coming_from_sigreturn;
+  struct trapframe *alarm_trapframe;
 };

@@ -1,2 +1,2 @@
 CompileFlags:
-    Add: [-I./kernel/]
+    Add: [-I/home/roginski/arazim/xv6-labs-2023/]

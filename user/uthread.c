@@ -41,11 +41,6 @@ struct thread all_thread[MAX_THREAD];
 struct thread *current_thread;
 extern void thread_switch(uint64, uint64);
 
-void
-set_sp(uint64 sp)
-{
-  asm volatile("mv tp, %0" : : "r" (sp));
-}
 
 static inline uint64
 r_ra()
@@ -64,8 +59,7 @@ thread_init(void)
   // save thread 0's state.
   current_thread = &all_thread[0];
   current_thread->state = RUNNING;
-  uint64 ra;
-  asm volatile("mv %0, ra" : "=r" (ra) );
+  uint64 ra = r_ra();
   memset(current_thread->stack, 0, sizeof(current_thread->stack));
   memset(&current_thread->context, 0, sizeof(current_thread->context));
   current_thread->context.ra = ra;
@@ -104,7 +98,6 @@ thread_schedule(void)
      * Invoke thread_switch to switch from t to next_thread:
      * thread_switch(??, ??);
      */
-    // t->state = RUNNABLE;
     thread_switch((uint64)&t->context, (uint64)&next_thread->context);
   } else
     next_thread = 0;

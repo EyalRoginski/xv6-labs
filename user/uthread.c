@@ -9,6 +9,7 @@
 
 #define STACK_SIZE  8192
 #define MAX_THREAD  4
+#define STACK_END(stack) stack + STACK_SIZE - 1
 
 
 struct context {
@@ -45,6 +46,15 @@ set_sp(uint64 sp)
 {
   asm volatile("mv tp, %0" : : "r" (sp));
 }
+
+static inline uint64
+r_ra()
+{
+  uint64 x;
+  asm volatile("mv %0, ra" : "=r" (x) );
+  return x;
+}
+
               
 void 
 thread_init(void)
@@ -52,10 +62,15 @@ thread_init(void)
   // main() is thread 0, which will make the first invocation to
   // thread_schedule(). It needs a stack so that the first thread_switch() can
   // save thread 0's state.
-  memset(&current_thread->stack, 0, STACK_SIZE);
-  set_sp((uint64)&current_thread->stack);
   current_thread = &all_thread[0];
   current_thread->state = RUNNING;
+  uint64 ra;
+  asm volatile("mv %0, ra" : "=r" (ra) );
+  memset(current_thread->stack, 0, sizeof(current_thread->stack));
+  memset(&current_thread->context, 0, sizeof(current_thread->context));
+  current_thread->context.ra = ra;
+  current_thread->context.sp = (uint64)STACK_END(current_thread->stack);
+  thread_switch(0, (uint64)&current_thread->context);
 }
 
 void 
@@ -89,6 +104,7 @@ thread_schedule(void)
      * Invoke thread_switch to switch from t to next_thread:
      * thread_switch(??, ??);
      */
+    // t->state = RUNNABLE;
     thread_switch((uint64)&t->context, (uint64)&next_thread->context);
   } else
     next_thread = 0;
@@ -103,9 +119,10 @@ thread_create(void (*func)())
     if (t->state == FREE) break;
   }
   t->state = RUNNABLE;
-  memset(&t->stack, 0, STACK_SIZE);
-  set_sp((uint64)&t->stack);
-  func();
+  memset(t->stack, 0, sizeof(t->stack));
+  memset(&t->context, 0, sizeof(t->context));
+  t->context.ra = (uint64)func;
+  t->context.sp = (uint64)STACK_END(t->stack);
 }
 
 void 
